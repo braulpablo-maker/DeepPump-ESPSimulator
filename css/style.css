@@ -1,0 +1,856 @@
+/**
+ * DeepPump ESP Simulator — Estilos SCADA/Industrial
+ * Interfaz tipo consola de control industrial con:
+ * - Fondo oscuro metálico con textura sutil
+ * - Paneles biselados estilo industrial
+ * - Displays LCD con texto verde brillante
+ * - Botones metálicos con efectos de presión
+ * - Animaciones de trip y micro-transiciones
+ */
+
+/* ===================================================================
+   VARIABLES CSS (Design Tokens)
+   =================================================================== */
+:root {
+    /* Fondos */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #252525;
+    --bg-panel: #3a3a3a;
+    --bg-panel-gradient: linear-gradient(180deg, #484848 0%, #333 100%);
+    --bg-panel-dark: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+
+    /* Bordes */
+    --border-light: #666;
+    --border-dark: #222;
+    --border-panel: #777;
+
+    /* Textos */
+    --text-primary: #ddd;
+    --text-secondary: #999;
+    --text-dim: #555;
+
+    /* LCD */
+    --lcd-bg: #0a0a0a;
+    --lcd-text: #00ff41;
+    --lcd-glow: rgba(0, 255, 65, 0.3);
+    --lcd-border: #333;
+
+    /* Botones */
+    --btn-bg: linear-gradient(180deg, #888 0%, #5a5a5a 100%);
+    --btn-bg-hover: linear-gradient(180deg, #999 0%, #666 100%);
+    --btn-bg-active: linear-gradient(180deg, #555 0%, #888 100%);
+    --btn-border-out: 2px outset #999;
+    --btn-border-in: 2px inset #666;
+
+    /* Power */
+    --power-off-bg: radial-gradient(circle, #aa3333 0%, #662222 100%);
+    --power-off-border: #993333;
+    --power-on-bg: radial-gradient(circle, #33cc33 0%, #228822 100%);
+    --power-on-border: #33aa33;
+    --power-on-glow: 0 0 12px rgba(0, 255, 0, 0.5);
+
+    /* Colores funcionales */
+    --pump-red: #cc0000;
+    --fluid-green: #00aa66;
+    --trip-red: #ff0000;
+
+    /* Fuentes */
+    --font-lcd: 'Share Tech Mono', 'Courier New', monospace;
+    --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Espaciado */
+    --gap-sm: 6px;
+    --gap-md: 10px;
+    --gap-lg: 14px;
+    --radius: 4px;
+}
+
+
+/* ===================================================================
+   RESET Y BASE
+   =================================================================== */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-primary);
+    font-family: var(--font-ui);
+    color: var(--text-primary);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* ===================================================================
+   LAYOUT PRINCIPAL (#app)
+   =================================================================== */
+#app {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    width: 100vw;
+    height: 100vh;
+    min-height: 600px;
+    background:
+        /* Textura sutil de metal cepillado */
+        repeating-linear-gradient(
+            90deg,
+            transparent, transparent 2px,
+            rgba(255,255,255,0.008) 2px,
+            rgba(255,255,255,0.008) 4px
+        ),
+        linear-gradient(180deg, #1c1c1c 0%, #222 50%, #1a1a1a 100%);
+}
+
+
+/* ===================================================================
+   BARRA SUPERIOR (#top-bar)
+   =================================================================== */
+#top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: var(--gap-sm) var(--gap-md);
+    gap: var(--gap-md);
+    background: linear-gradient(180deg, #3e3e3e 0%, #2e2e2e 100%);
+    border-bottom: 2px solid #555;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+
+/* ===================================================================
+   PANELES
+   =================================================================== */
+.panel {
+    background: var(--bg-panel-gradient);
+    border: var(--btn-border-out);
+    border-radius: var(--radius);
+    padding: var(--gap-sm);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        0 2px 4px rgba(0,0,0,0.4);
+}
+
+.panel-dark {
+    background: var(--bg-panel-dark);
+    border-color: #555;
+}
+
+.panel-well {
+    background: linear-gradient(180deg, #505050 0%, #3a3a3a 40%, #2a2a2a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-chart {
+    background: #fff;
+    border-color: #ccc;
+    padding: 2px;
+}
+
+.panel-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    max-width: 300px;
+}
+
+.panel-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+}
+
+.panel-title {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+
+/* ===================================================================
+   LCD DISPLAYS
+   =================================================================== */
+.lcd-display {
+    background: var(--lcd-bg);
+    color: var(--lcd-text);
+    font-family: var(--font-lcd);
+    font-size: 17px;
+    padding: 6px 12px;
+    border: 2px inset var(--lcd-border);
+    border-radius: 3px;
+    text-align: center;
+    text-shadow: 0 0 8px var(--lcd-glow);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.8);
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.lcd-large {
+    font-size: 26px;
+    padding: 10px 20px;
+    letter-spacing: 1px;
+}
+
+.lcd-medium {
+    font-size: 20px;
+    padding: 8px 14px;
+}
+
+.lcd-small {
+    font-size: 14px;
+    padding: 5px 8px;
+}
+
+.lcd-case {
+    font-size: 13px;
+    padding: 5px 10px;
+    min-width: 120px;
+}
+
+
+/* ===================================================================
+   BOTONES
+   =================================================================== */
+
+/* Botón de encendido (circular) */
+.btn-power {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px outset #999;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-power.off {
+    background: var(--power-off-bg);
+    border-color: var(--power-off-border);
+    box-shadow: 0 0 4px rgba(255, 0, 0, 0.3);
+}
+
+.btn-power.on {
+    background: var(--power-on-bg);
+    border-color: var(--power-on-border);
+    box-shadow: var(--power-on-glow);
+}
+
+.btn-power:hover {
+    filter: brightness(1.15);
+}
+
+.btn-power:active {
+    border-style: inset;
+    transform: scale(0.95);
+}
+
+/* Botones VFD (HZ, OL, UL) */
+.btn-vfd {
+    background: var(--btn-bg);
+    border: var(--btn-border-out);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 36px;
+}
+
+.btn-vfd:hover {
+    filter: brightness(1.15);
+}
+
+.btn-vfd:active {
+    border: var(--btn-border-in);
+}
+
+.btn-vfd.active {
+    background: linear-gradient(180deg, #4a7aaa 0%, #3a5a7a 100%);
+    border-color: #6a9aca;
+    color: #fff;
+}
+
+/* Botones de parámetros */
+.btn-param {
+    background: var(--btn-bg);
+    border: var(--btn-border-out);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    line-height: 1.2;
+    min-height: 32px;
+}
+
+.btn-param:hover {
+    filter: brightness(1.15);
+}
+
+.btn-param:active {
+    border: var(--btn-border-in);
+}
+
+.btn-param.active {
+    background: linear-gradient(180deg, #4a7aaa 0%, #3a5a7a 100%);
+    border-color: #6a9aca;
+    color: #fff;
+}
+
+/* Botones de navegación (flechas) */
+.btn-nav {
+    background: var(--btn-bg);
+    border: var(--btn-border-out);
+    border-radius: 3px;
+    color: var(--text-primary);
+    font-size: 14px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-nav:hover {
+    filter: brightness(1.2);
+}
+
+.btn-nav:active {
+    border: var(--btn-border-in);
+}
+
+/* Botón de acción (Reset) */
+.btn-action {
+    background: linear-gradient(180deg, #996644 0%, #664422 100%);
+    border: 2px outset #aa7755;
+    border-radius: 3px;
+    color: #ffeedd;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-action:hover {
+    filter: brightness(1.15);
+}
+
+.btn-action:active {
+    border-style: inset;
+}
+
+
+/* ===================================================================
+   SLIDERS
+   =================================================================== */
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 14px;
+    background: linear-gradient(180deg, #222 0%, #444 100%);
+    border: 1px inset #555;
+    border-radius: 3px;
+    outline: none;
+    margin: 4px 0;
+    cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 22px;
+    background: linear-gradient(180deg, #bbb 0%, #777 100%);
+    border: 1px outset #ccc;
+    border-radius: 3px;
+    cursor: grab;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.slider::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    background: linear-gradient(180deg, #999 0%, #bbb 100%);
+}
+
+.slider::-moz-range-thumb {
+    width: 18px;
+    height: 22px;
+    background: linear-gradient(180deg, #bbb 0%, #777 100%);
+    border: 1px outset #ccc;
+    border-radius: 3px;
+    cursor: grab;
+}
+
+.slider-small {
+    height: 10px;
+}
+
+.slider-small::-webkit-slider-thumb {
+    height: 16px;
+    width: 14px;
+}
+
+.slider-speed {
+    width: 100px;
+}
+
+
+/* ===================================================================
+   PANEL VFD (#vfd-panel)
+   =================================================================== */
+#vfd-panel {
+    min-width: 220px;
+}
+
+.vfd-row {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+    margin-bottom: var(--gap-sm);
+}
+
+.vfd-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+#vfd-display {
+    margin-bottom: 4px;
+}
+
+
+/* ===================================================================
+   PANEL CHOKE/BPD
+   =================================================================== */
+#choke-bpd-panel {
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+}
+
+.choke-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+/* ===================================================================
+   ÁREA PRINCIPAL (#main-area)
+   =================================================================== */
+#main-area {
+    display: grid;
+    grid-template-columns: 380px 1fr 400px;
+    gap: var(--gap-md);
+    padding: var(--gap-md);
+    overflow: hidden;
+    min-height: 0;
+}
+
+
+/* ===================================================================
+   COLUMNA IZQUIERDA
+   =================================================================== */
+#left-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    overflow: hidden;
+}
+
+#chart-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: linear-gradient(180deg, #111 0%, #0d0d12 100%);
+    border-color: #333;
+}
+
+#chart-amp, #chart-prod, #chart-press {
+    width: 100%;
+    flex: 1;
+    min-height: 60px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+#chart-press {
+    border-bottom: none;
+}
+
+#chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 3px 0;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.legend-item {
+    text-shadow: 0 0 4px currentColor;
+}
+
+#param-panel {
+    flex-shrink: 0;
+}
+
+#param-buttons {
+    display: flex;
+    gap: 3px;
+    margin-bottom: var(--gap-sm);
+    flex-wrap: wrap;
+}
+
+#param-display {
+    margin-bottom: 4px;
+}
+
+
+/* ===================================================================
+   COLUMNA CENTRAL (Pozo)
+   =================================================================== */
+#well-column {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#well-panel {
+    width: 100%;
+    max-width: 320px;
+}
+
+#well-canvas {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+
+/* ===================================================================
+   COLUMNA DERECHA
+   =================================================================== */
+#right-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    overflow: hidden;
+}
+
+#curve-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+}
+
+#pump-curve-canvas {
+    width: 100%;
+    flex: 1;
+    min-height: 200px;
+}
+
+#data-panel {
+    flex-shrink: 0;
+    font-family: var(--font-lcd);
+    font-size: 13px;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s ease;
+    border-radius: 2px;
+}
+
+.data-row:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.data-label {
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    cursor: default;
+}
+
+[data-tooltip] {
+    cursor: help;
+}
+
+.data-value {
+    color: var(--lcd-text);
+    font-family: var(--font-lcd);
+    font-size: 15px;
+    font-weight: 700;
+    text-shadow: 0 0 4px var(--lcd-glow);
+    min-width: 60px;
+    text-align: right;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* Temperatura de motor en zona de advertencia */
+.data-value.warn-temp {
+    color: #ffaa00;
+    text-shadow: 0 0 6px rgba(255, 170, 0, 0.5);
+}
+
+/* Temperatura de motor en zona crítica */
+.data-value.crit-temp {
+    color: #ff3333;
+    text-shadow: 0 0 8px rgba(255, 50, 50, 0.6);
+    animation: temp-pulse 1s infinite;
+}
+
+@keyframes temp-pulse {
+    0%, 100% { color: #ff3333; }
+    50% { color: #ff8888; }
+}
+
+/* GVF alto — advertencia */
+.data-value.warn-gvf {
+    color: #ffaa00;
+    text-shadow: 0 0 6px rgba(255, 170, 0, 0.5);
+}
+
+.data-value.crit-gvf {
+    color: #ff3333;
+    text-shadow: 0 0 8px rgba(255, 50, 50, 0.6);
+}
+
+
+/* ===================================================================
+   BARRA INFERIOR (#bottom-bar)
+   =================================================================== */
+#bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--gap-sm) var(--gap-md);
+    gap: var(--gap-md);
+    background: linear-gradient(180deg, #2e2e2e 0%, #3e3e3e 100%);
+    border-top: 2px solid #555;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.3);
+}
+
+.speed-icon {
+    font-size: 16px;
+}
+
+.speed-label {
+    font-family: var(--font-lcd);
+    font-size: 13px;
+    color: var(--lcd-text);
+    text-shadow: 0 0 4px var(--lcd-glow);
+    min-width: 35px;
+}
+
+
+/* ===================================================================
+   INDICADOR DE TRIP
+   =================================================================== */
+#trip-indicator {
+    font-family: var(--font-lcd);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 3px;
+    text-align: center;
+    min-width: 80px;
+    transition: background-color 0.3s ease;
+}
+
+.trip-off {
+    background: #333;
+    color: #888;
+    border: 1px solid #555;
+}
+
+.trip-running {
+    background: #1a4a1a;
+    color: #33dd33;
+    border: 1px solid #33aa33;
+    text-shadow: 0 0 6px rgba(0, 255, 0, 0.4);
+}
+
+.trip-active {
+    background: #ff0000;
+    color: #fff;
+    border: 1px solid #ff4444;
+    animation: trip-blink 0.5s infinite;
+    text-shadow: 0 0 6px rgba(255, 0, 0, 0.6);
+}
+
+/* Indicador de GAS LOCK */
+#gas-lock-indicator {
+    font-family: var(--font-lcd);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 3px;
+    text-align: center;
+    line-height: 1.2;
+    transition: all 0.3s ease;
+}
+
+.gas-lock-hidden {
+    visibility: hidden;
+    background: transparent;
+    border: 1px solid transparent;
+    color: transparent;
+}
+
+.gas-lock-active {
+    visibility: visible;
+    background: #cc5500;
+    color: #fff;
+    border: 1px solid #ff6600;
+    text-shadow: 0 0 4px rgba(255, 100, 0, 0.5);
+    animation: gas-lock-pulse 0.8s infinite;
+}
+
+@keyframes gas-lock-pulse {
+    0%, 100% { background: #cc5500; }
+    50% { background: #993300; }
+}
+
+@keyframes trip-blink {
+    0%, 49% { background: #ff0000; color: #fff; }
+    50%, 100% { background: #660000; color: #ff4444; }
+}
+
+/* Flash del display VFD durante trip */
+.trip-flash {
+    animation: vfd-flash 0.5s infinite;
+}
+
+@keyframes vfd-flash {
+    0%, 49% {
+        background: var(--lcd-bg);
+        color: var(--lcd-text);
+    }
+    50%, 100% {
+        background: #440000;
+        color: #ff3333;
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+}
+
+
+/* ===================================================================
+   LOGO DEL SIMULADOR
+   =================================================================== */
+#simulator-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+}
+
+.logo-name {
+    font-family: var(--font-ui);
+    font-size: 18px;
+    font-weight: 800;
+    color: #e8c84a;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(232, 200, 74, 0.3);
+    line-height: 1;
+}
+
+.logo-subtitle {
+    font-family: var(--font-ui);
+    font-size: 9px;
+    font-weight: 500;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+
+/* ===================================================================
+   RESPONSIVE (pantallas pequeñas)
+   =================================================================== */
+@media (max-width: 1100px) {
+    #main-area {
+        grid-template-columns: 1fr 1fr;
+    }
+    #well-column {
+        order: -1;
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    #main-area {
+        grid-template-columns: 1fr;
+    }
+    #top-bar {
+        flex-wrap: wrap;
+    }
+    #bottom-bar {
+        flex-wrap: wrap;
+    }
+}
+
+/* ===================================================================
+   CUSTOM TOOLTIP (posicionado por JS)
+   =================================================================== */
+#custom-tooltip {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    display: none;
+    max-width: 280px;
+    background: rgba(10, 10, 15, 0.97);
+    color: #d8d8d8;
+    font-family: var(--font-ui);
+    font-size: 11.5px;
+    line-height: 1.55;
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    box-shadow:
+        0 6px 20px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255,255,255,0.05);
+}
+
+#custom-tooltip.show {
+    display: block;
+}

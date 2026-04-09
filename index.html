@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepPump — ESP Simulator</title>
+    <meta name="description" content="Simulador educativo interactivo de Bombas Electrosumergibles (ESP) para pozos petroleros">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=3">
+
+</head>
+<body>
+
+<!-- Tooltip personalizado (posicionado por JS) -->
+<div id="custom-tooltip"></div>
+
+<div id="app">
+
+    <!-- ================================================================
+         BARRA SUPERIOR: VFD + FTP + Choke/BPD
+         ================================================================ -->
+    <header id="top-bar">
+
+        <!-- Panel VFD -->
+        <div id="vfd-panel" class="panel">
+            <div class="panel-title">VFD — Variable Frequency Drive</div>
+            <div class="vfd-row">
+                <button id="btn-power" class="btn-power off"
+                    data-tooltip="Encender o apagar la bomba ESP. En TRIP OL, click para reiniciar manualmente.">
+                </button>
+                <div class="vfd-buttons">
+                    <button class="btn-vfd active" data-param="hz"
+                        data-tooltip="Hz — Frecuencia del VFD. Controla la velocidad de la bomba (leyes de afinidad). Rango: 0–90 Hz. BASE: 50 Hz.">HZ</button>
+                    <button class="btn-vfd" data-param="ol"
+                        data-tooltip="OL — Overload setpoint. Si el amperaje supera este valor por 2 s, la bomba tripea por sobrecarga. Fijar en 200 A para deshabilitar.">OL</button>
+                    <button class="btn-vfd" data-param="ul"
+                        data-tooltip="UL — Underload setpoint. Si el amperaje cae debajo de este valor por 2 s (p.ej. pumpoff), la bomba tripea y reinicia automáticamente tras 10 s.">UL</button>
+                </div>
+            </div>
+            <div id="vfd-display" class="lcd-display"
+                data-tooltip="Display del VFD: frecuencia actual (Hz) y corriente del motor (A). Parpadea en rojo durante trip.">
+                <span id="vfd-hz">60</span>&thinsp;HZ,&nbsp;<span id="vfd-amps">0.0</span>&thinsp;A
+            </div>
+            <input type="range" id="vfd-slider" class="slider" min="0" max="90" value="60" step="1"
+                data-tooltip="Slider del parámetro VFD seleccionado (Hz, OL o UL).">
+        </div>
+
+        <!-- Presión FTP -->
+        <div id="ftp-panel" class="panel panel-center">
+            <div id="ftp-display" class="lcd-display lcd-large"
+                data-tooltip="FTP — Flowing Tubing Pressure. Presión en la cabeza del pozo (superficie). Aumenta al cerrar el choke. Unidad: psi.">
+                FTP:&nbsp;<span id="ftp-value">50</span>&thinsp;psi
+            </div>
+        </div>
+
+        <!-- Choke y BPD -->
+        <div id="choke-bpd-panel" class="panel">
+            <div class="choke-group">
+                <div class="lcd-display lcd-small"
+                    data-tooltip="Choke — apertura de la válvula de estrangulamiento en superficie. 100% = totalmente abierta (sin restricción). 0% = cerrado = bombeo a punto cerrado.">
+                    Choke:&nbsp;<span id="choke-value">100</span>%
+                </div>
+                <input type="range" id="choke-slider" class="slider slider-small" min="0" max="100" value="100" step="1"
+                    data-tooltip="Regula la apertura del choke. Al cerrar, aumenta la contrapresión (FTP) y reduce el caudal.">
+            </div>
+            <div id="bpd-display" class="lcd-display lcd-medium"
+                data-tooltip="BPD — Barriles Por Día producidos en superficie. Es el promedio móvil desde que arrancó la bomba.">
+                <span id="bpd-value">0</span>&thinsp;BPD
+            </div>
+        </div>
+    </header>
+
+    <!-- ================================================================
+         ÁREA PRINCIPAL: Chart + Pozo + Curva de Bomba
+         ================================================================ -->
+    <main id="main-area">
+
+        <!-- === COLUMNA IZQUIERDA === -->
+        <div id="left-column">
+
+            <!-- Ammeter Chart -->
+            <div id="chart-panel" class="panel panel-dark"
+                data-tooltip="Historial de parámetros en tiempo real.">
+                
+                <!-- Chart 1: Amperaje (AMP, OL, UL) -->
+                <canvas id="chart-amp" width="380" height="73"></canvas>
+                
+                <!-- Chart 2: Producción y Temp (BLPD, MWT) -->
+                <canvas id="chart-prod" width="380" height="73"></canvas>
+                
+                <!-- Chart 3: Presiones (FTP, PIP) -->
+                <canvas id="chart-press" width="380" height="73"></canvas>
+                
+                <!-- Leyenda HTML restaurada -->
+                <div id="chart-legend">
+                    <span class="legend-item" style="color:#1a5fb4" data-tooltip="AMP — Corriente del motor (A)">AMP</span>
+                    <span class="legend-item" style="color:#00bcd4" data-tooltip="MWT — Motor Winding Temperature, temperatura del bobinado (°F)">MWT</span>
+                    <span class="legend-item" style="color:#e69516" data-tooltip="BLPD — Barriles de líquido por día en la bomba">BLPD</span>
+                    <span class="legend-item" style="color:#2e7d32" data-tooltip="FTP — Flowing Tubing Pressure en superficie (psi)">FTP</span>
+                    <span class="legend-item" style="color:#7b1fa2" data-tooltip="PIP — Pump Intake Pressure, presión a la entrada de la bomba (psi)">PIP</span>
+                </div>
+            </div>
+
+            <!-- Panel parámetros del pozo -->
+            <div id="param-panel" class="panel">
+                <div id="param-buttons">
+                    <button class="btn-param active" data-param="pumpWear"
+                        data-tooltip="Pump Wear — Desgaste de la bomba (%). 0% = nueva. 100% = totalmente desgastada. Reduce Q y H cuadráticamente.">Pump<br>Wear</button>
+                    <button class="btn-param" data-param="sepEff"
+                        data-tooltip="Sep Eff — Eficiencia del separador de gas rotativo (%). Si es 0%, todo el gas libre entra a la bomba.">Sep<br>Eff</button>
+                    <button class="btn-param" data-param="sbhp"
+                        data-tooltip="SBHP — Static Bottom Hole Pressure. Presión de reservorio (psi). A mayor SBHP, mayor PIP y producción potencial.">SBHP</button>
+                    <button class="btn-param" data-param="pi"
+                        data-tooltip="PI — Productivity Index del pozo (BLPD/psi). Define cuánto produce el pozo por cada psi de drawdown. IPR = PI × (SBHP − PIP).">PI</button>
+                    <button class="btn-param" data-param="glr"
+                        data-tooltip="GLR — Gas-Liquid Ratio (scf/bbl). Relación de gas a líquido en el yacimiento. Valores altos aumentan el GVF y pueden causar gas lock.">GLR</button>
+                    <button class="btn-param" data-param="visc"
+                        data-tooltip="Visc — Viscosidad del líquido (cp). Mayor viscosidad degrada el rendimiento de la bomba (curvas se desplazan hacia abajo y la izquierda). Agua = 1 cp.">Visc</button>
+                    <button class="btn-param" data-param="liqSG"
+                        data-tooltip="Liq SG — Specific Gravity del líquido (relativo al agua). Agua = 1.00, petróleo típico = 0.85–0.95. Afecta presiones y cabeza.">Liq<br>SG</button>
+                </div>
+                <div id="param-display" class="lcd-display">
+                    <span id="param-name">Pump Wear</span>:&nbsp;<span id="param-value">0</span>&thinsp;<span id="param-unit">%</span>
+                </div>
+                <input type="range" id="param-slider" class="slider" min="0" max="100" value="0" step="1"
+                    data-tooltip="Ajusta el valor del parámetro de pozo seleccionado arriba.">
+            </div>
+        </div>
+
+        <!-- === COLUMNA CENTRAL: Pozo === -->
+        <div id="well-column">
+            <div id="well-panel" class="panel panel-well"
+                data-tooltip="Visualización del pozo. Fluidos animados en casing (verde) y tubing. Click en CV (check-valve) para activarla/desactivarla.">
+                <canvas id="well-canvas" width="240" height="520"></canvas>
+            </div>
+        </div>
+
+        <!-- === COLUMNA DERECHA: Curva + Datos === -->
+        <div id="right-column">
+
+            <!-- Gráfico de curva de bomba -->
+            <div id="curve-panel" class="panel panel-chart"
+                data-tooltip="Curva de Bomba Head vs Rate. Gris=catálogo base, Azul=ajustada al Hz actual, Roja=operación real (si hay wear/visc), Verde=curva del sistema. Punto naranja = punto de operación.">
+                <canvas id="pump-curve-canvas" width="380" height="260"></canvas>
+            </div>
+
+            <!-- Panel datos calculados -->
+            <div id="data-panel" class="panel">
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="BHP — Brake Horse Power. Potencia mecánica total que consume el motor (requerida por la bomba + pérdidas).">Power (BHP):</span>
+                    <span class="data-value" id="data-bhp">0</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="BLPD — Barriles de Líquido Por Día bombeados en la profundidad de la bomba.">Pump rate (BLPD):</span>
+                    <span class="data-value" id="data-blpd">0</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="Head — Cabeza generada por la bomba en pies de fluido. Si Head < Head requerida, el sistema no levanta fluido.">Head (feet):</span>
+                    <span class="data-value" id="data-head">0</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="PDP — Pump Discharge Pressure. Presión a la salida de la bomba (psi). Es la suma del FTP + columna hidrostática del tubing.">Pump Disch. (psi):</span>
+                    <span class="data-value" id="data-pdp">0</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="PIP — Pump Intake Pressure. Presión a la entrada de la bomba. Equivale al FBHP (Flowing BHP). Reducir PIP aumenta la producción.">Pump Intake (psi):</span>
+                    <span class="data-value" id="data-pip">0</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="Pump SG — Specific Gravity de la mezcla gas+líquido que entra a la bomba. Baja mucho con alto GVF, reduciendo la cabeza efectiva.">Pump SG:</span>
+                    <span class="data-value" id="data-pumpsg">0.00</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="MWT — Motor Winding Temperature (°F). Temperatura del bobinado del motor. Si supera ~450°F, el motor puede quemarse. El gas reduce el enfriamiento.">Motor Temp (°F):</span>
+                    <span class="data-value" id="data-temp">163</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label" data-tooltip="GVF — Gas Volume Fraction en la entrada de la bomba (%). >60% = condición de GAS LOCK. La bomba pierde capacidad de bombeo.">GVF into pump (%):</span>
+                    <span class="data-value" id="data-gvf">0</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================================================================
+         BARRA INFERIOR: Velocidad + Casos + Estado
+         ================================================================ -->
+    <footer id="bottom-bar">
+
+        <!-- Velocidad de simulación -->
+        <div id="speed-panel" class="panel panel-inline">
+            <span class="speed-icon" data-tooltip="Velocidad de simulación (multiplicador de tiempo). 1x = tiempo real. 5x = 5 veces más rápido para ver efectos más rápidamente.">⏱</span>
+            <input type="range" id="speed-slider" class="slider slider-speed" min="0" max="5" value="1" step="0.1"
+                data-tooltip="Multiplica la velocidad del tiempo simulado. Útil para ver el llenado del tubing o calentamiento del motor.">
+            <span id="speed-value" class="speed-label">1.0x</span>
+        </div>
+
+        <!-- Navegación de casos -->
+        <div id="case-panel" class="panel panel-inline">
+            <button id="btn-prev-case" class="btn-nav"
+                data-tooltip="Caso anterior — carga el escenario preconfigurado anterior (de 15 disponibles).">◄</button>
+            <div id="case-display" class="lcd-display lcd-case"
+                data-tooltip="Caso activo — escenario preconfigurado que define todos los parámetros del pozo y la bomba.">Base Case</div>
+            <button id="btn-next-case" class="btn-nav"
+                data-tooltip="Caso siguiente — carga el siguiente escenario preconfigurado.">►</button>
+            <button id="btn-reset" class="btn-action"
+                data-tooltip="Reset — vuelve al caso base con todos los parámetros por defecto.">Reset</button>
+        </div>
+
+        <!-- Estado e identidad -->
+        <div id="status-panel" class="panel panel-inline">
+            <div id="trip-indicator" class="trip-off"
+                data-tooltip="Estado del sistema: STOPPED (apagado), RUNNING (en operación), TRIP OL (sobrecarga — requiere reinicio manual), TRIP UL (subamperaje — reinicio automático en 10 s).">STOPPED</div>
+            <div id="gas-lock-indicator" class="gas-lock-hidden"
+                data-tooltip="GAS LOCK — El GVF en la entrada supera el 60%. La bomba pierde capacidad de bombear. Aumentar el Separador o reducir el GLR para salir.">GAS<br>LOCK</div>
+            <div id="simulator-logo">
+                <span class="logo-name">DeepPump</span>
+                <span class="logo-subtitle">ESP Simulator</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Scripts (orden de carga: dependencias primero) -->
+<script src="js/constants.js?v=2"></script>
+<script src="js/cases.js?v=2"></script>
+<script src="js/physics.js?v=2"></script>
+<script src="js/state.js?v=2"></script>
+<script src="js/wellCanvas.js?v=2"></script>
+<script src="js/chartCanvas.js?v=3"></script>
+<script src="js/pumpCurve.js?v=2"></script>
+<script src="js/controls.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
+</body>
+</html>
