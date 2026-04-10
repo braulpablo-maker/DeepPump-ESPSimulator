@@ -1,0 +1,23 @@
+# DeepPump ESP Simulator - Dependencias y Requerimientos
+
+# 1. Dependencias de Software Externo (Librerías)
+# CERO. Este proyecto fue codificado enteramente en Vanilla JavaScript (módulos ES6+), 
+# HTML5 nativo y CSS3 puro. No requiere Node.js, npm, Babel, Webpack, ni React.
+
+# 2. Requerimientos de Ejecución (Desarrollo / Pruebas Locales)
+# Para ejecutar localmente evitando problemas de políticas de seguridad CORS del navegador
+# al cargar "file://", necesitas un servidor HTTP estático básico.
+
+# Opción A (Recomendada y usada durante desarrollo):
+# Python 3.x (Viene preinstalado en muchas máquinas de desarrollo)
+# Comando: python -m http.server 8080
+
+# Opción B (Usuarios de Visual Studio Code):
+# Extensión "Live Server".
+
+# 3. Requerimientos de Entorno (Navegadores Compatibles)
+# Al basarse en la API de Canvas 2D nativa, Tooltips dinámicos delegados y variables CSS:
+# - Google Chrome 88+
+# - Mozilla Firefox 85+
+# - Microsoft Edge 88+
+# - Safari 14+

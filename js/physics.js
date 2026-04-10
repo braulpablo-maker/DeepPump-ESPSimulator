@@ -350,12 +350,14 @@ const Physics = {
             const pumpSG = this.calcPumpSG(liqSG, gvf);
 
             // Presión de descarga necesaria para elevar fluidos a superficie
-            // El tubing por encima de la bomba contiene mayormente líquido,
-            // así que usamos liqSG para la columna hidrostática del tubing
             const pdp = ftp + CONFIG.PUMP_DEPTH * liqSG / CONFIG.PSI_TO_FT_WATER;
 
+            // Fricción en el tubing (simplificada): Hf ∝ L × (Q²)
+            // Usamos un factor típico para 2-7/8" que da unos ~150-200ft de pérdida a alto caudal
+            const tubingFriction = 2.0 * (CONFIG.PUMP_DEPTH / 1000) * Math.pow(Q / 1000, 2);
+
             // Head requerida por el sistema (en pies de fluido)
-            const headRequired = (pdp - pip) * CONFIG.PSI_TO_FT_WATER / Math.max(0.1, liqSG);
+            const headRequired = (pdp - pip) * CONFIG.PSI_TO_FT_WATER / Math.max(0.1, liqSG) + tubingFriction;
 
             // Head disponible de la bomba
             let headPump = this.pumpCurveHead(Q, Hsi_final, Qmax_final);

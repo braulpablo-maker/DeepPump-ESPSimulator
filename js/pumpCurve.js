@@ -18,7 +18,7 @@ const PumpCurveRenderer = {
         const W = ctx.canvas.width;
         const H = ctx.canvas.height;
 
-        const m = { left: 50, right: 20, top: 18, bottom: 38 };
+        const m = { left: 50, right: 20, top: 18, bottom: 50 };
         const plotX = m.left;
         const plotY = m.top;
         const plotW = W - m.left - m.right;
@@ -167,10 +167,20 @@ const PumpCurveRenderer = {
         for (let i = 0; i <= steps; i++) {
             const Q = (i / steps) * maxQ;
             if (Q <= 0) continue;
+            
+            // 1. PIP
             const pip = Math.max(0, state.sbhp - Q / Math.max(0.01, state.pi));
-            const ftp = CONFIG.FTP_BASE;
+            
+            // 2. FTP (con efecto cuadrático de choke)
+            const ftp = Physics.calcFTP(state.choke, Q);
+            
+            // 3. Fricción direccional en tubing
+            const tubingFriction = 2.0 * (CONFIG.PUMP_DEPTH / 1000) * Math.pow(Q / 1000, 2);
+            
+            // 4. Head total (elevación + ΔP + fricción)
             const systemHead = (CONFIG.PUMP_DEPTH * state.liqSG / CONFIG.PSI_TO_FT_WATER + ftp - pip)
-                               * CONFIG.PSI_TO_FT_WATER / state.liqSG;
+                               * CONFIG.PSI_TO_FT_WATER / Math.max(0.1, state.liqSG) + tubingFriction;
+                               
             if (systemHead > 0 && systemHead < maxH * 1.5) {
                 pts.push({ q: Q, h: systemHead });
             }

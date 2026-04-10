@@ -13,6 +13,9 @@ const App = {
     pressCtx: null,
     curveCtx: null,
 
+    // Lista de IDs de canvas para resize
+    _canvasIds: ['chart-amp', 'chart-prod', 'chart-press', 'well-canvas', 'pump-curve-canvas'],
+
     // Control del game loop
     _lastTime: 0,
     _running: true,
@@ -34,11 +37,48 @@ const App = {
         // Inicializar controles de UI
         Controls.init();
 
+        // Ajustar canvas al tamaño real del contenedor
+        this._resizeCanvases();
+
+        // Escuchar resize de ventana (debounced)
+        window.addEventListener('resize', this._debounce(() => this._resizeCanvases(), 200));
+
         // Arrancar el game loop
         this._lastTime = performance.now();
         requestAnimationFrame((t) => this._gameLoop(t));
 
         console.log('DeepPump ESP Simulator — Inicializado correctamente');
+    },
+
+    /**
+     * Sincronizar la resolución interna de cada canvas con su
+     * tamaño CSS renderizado (evita borrosidad y clipping en responsive).
+     */
+    _resizeCanvases() {
+        this._canvasIds.forEach(id => {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            const w = Math.round(rect.width);
+            const h = Math.round(rect.height);
+            // Solo actualizar si cambió significativamente (>2px)
+            if (Math.abs(canvas.width - w) > 2 || Math.abs(canvas.height - h) > 2) {
+                canvas.width = w;
+                canvas.height = h;
+            }
+        });
+    },
+
+    /**
+     * Utilidad debounce: retrasa la ejecución de fn hasta que
+     * pasen `delay` ms sin nuevas invocaciones.
+     */
+    _debounce(fn, delay) {
+        let timer = null;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
     },
 
     /**

@@ -65,6 +65,9 @@ La interfaz reproduce el look de una consola de control de campo SCADA con:
 
 ### Tooltips pedagógicos
 Todos los controles, displays, botones y labels tienen tooltips que explican el concepto, unidades, rango, y efecto físico de cada parámetro al pasar el mouse.
+  
+> [!TIP]
+> Puedes consultar el [Manual de Escenarios ESP](docs/Manual_de_Escenarios_ESP.md) para un análisis técnico profundo de cada caso de estudio.
 
 ---
 
@@ -73,20 +76,20 @@ Todos los controles, displays, botones y labels tienen tooltips que explican el 
 | # | Caso | Condición simulada |
 |---|---|---|
 | 1 | Base Case | Operación normal de referencia |
-| 2 | Low OL Trip | OL bajo → trip por sobrecarga |
-| 3 | Pumpoff (UL) | Nivel cae → underload → trip/reinicio |
-| 4 | High Pump Wear | Bomba muy desgastada (70%) |
-| 5 | High Viscosity | Petróleo viscoso (50 cp) |
-| 6 | Low PI | Reservorio de baja productividad |
-| 7 | High GLR | Alto gas libre → GVF elevado |
-| 8 | Gas Lock | GVF > 60 % → gas lock |
-| 9 | Choke Restricted | Choke parcialmente cerrado |
-| 10 | Low Freq (VFD) | Operación a baja frecuencia (35 Hz) |
-| 11 | High Freq | Operación a alta frecuencia (75 Hz) |
-| 12 | Gas Separator | Separador de gas activado (80%) |
-| 13 | Check Valve | Check-valve instalada, efecto al parar |
-| 14 | Worn + Gassy | Bomba desgastada con gas libre |
-| 15 | Redesign | Bomba sobredimensionada (alta cabeza) |
+| 2 | Underload | Ajuste erróneo de protección UL vs Amperaje |
+| 3 | Overload | Trip por sobrecarga eléctrica a alta frecuencia |
+| 4 | Pumpoff | Agotamiento del pozo (Drawdown excesivo) |
+| 5 | Worn | Bomba con desgaste mecánico (35%) |
+| 6 | Viscous | Petróleo pesado (30 cp) y degradación de bomba |
+| 7 | Gassy | Alto gas libre (GLR 600) y GVF elevado |
+| 8 | Gas Lock | Bloqueo total por gas (GVF > 60%) y riesgo térmico |
+| 9 | Redesign 1 | Optimización de pozo de baja producción |
+| 10 | Redesign 2 | Operación forzada en zona de Downthrust |
+| 11 | OPS 1 | Diagnóstico multivariable (Wear + Visc + Gas) |
+| 12 | OPS 2 | Calibración de simulador a datos reales |
+| 13 | OPS 3 | Error operativo: Choke restringido (Caudal cero) |
+| 14 | OPS 4 | Arranque con salmuera pesada (SG 1.07) |
+| 15 | OPS 5 | Cambio súbito en el reservorio (PI/SBHP) |
 
 ---
 

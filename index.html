@@ -6,7 +6,7 @@
     <title>DeepPump — ESP Simulator</title>
     <meta name="description" content="Simulador educativo interactivo de Bombas Electrosumergibles (ESP) para pozos petroleros">
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=3">
+    <link rel="stylesheet" href="css/style.css?v=4">
 
 </head>
 <body>
@@ -94,6 +94,7 @@
                 <!-- Leyenda HTML restaurada -->
                 <div id="chart-legend">
                     <span class="legend-item" style="color:#1a5fb4" data-tooltip="AMP — Corriente del motor (A)">AMP</span>
+                    <span class="legend-item" style="color:#ff8c00" data-tooltip="HZ — Frecuencia del VFD (Hz)">HZ</span>
                     <span class="legend-item" style="color:#00bcd4" data-tooltip="MWT — Motor Winding Temperature, temperatura del bobinado (°F)">MWT</span>
                     <span class="legend-item" style="color:#e69516" data-tooltip="BLPD — Barriles de líquido por día en la bomba">BLPD</span>
                     <span class="legend-item" style="color:#2e7d32" data-tooltip="FTP — Flowing Tubing Pressure en superficie (psi)">FTP</span>
@@ -224,12 +225,12 @@
 <!-- Scripts (orden de carga: dependencias primero) -->
 <script src="js/constants.js?v=2"></script>
 <script src="js/cases.js?v=2"></script>
-<script src="js/physics.js?v=2"></script>
-<script src="js/state.js?v=2"></script>
+<script src="js/physics.js?v=3"></script>
+<script src="js/state.js?v=3"></script>
 <script src="js/wellCanvas.js?v=2"></script>
-<script src="js/chartCanvas.js?v=3"></script>
-<script src="js/pumpCurve.js?v=2"></script>
+<script src="js/chartCanvas.js?v=4"></script>
+<script src="js/pumpCurve.js?v=3"></script>
 <script src="js/controls.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

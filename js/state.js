@@ -41,7 +41,7 @@ const simState = {
 
     // --- Historial para Ammeter Chart ---
     history: {
-        amps: [], motorTemp: [], blpd: [],
+        amps: [], hz: [], motorTemp: [], blpd: [],
         ftp: [], pdp: [], pip: [], gvf: []
     },
 
@@ -266,6 +266,7 @@ const SimEngine = {
         const max = CONFIG.HISTORY_MAX_POINTS;
 
         h.amps.push(simState.amps);
+        h.hz.push(simState.hz);
         h.motorTemp.push(simState.motorTemp);
         h.blpd.push(simState.blpd);
         h.ftp.push(simState.ftp);

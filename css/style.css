@@ -805,27 +805,321 @@ html, body {
 
 
 /* ===================================================================
-   RESPONSIVE (pantallas pequeñas)
+   RESPONSIVE — TABLET (≤ 1100px)
    =================================================================== */
 @media (max-width: 1100px) {
+
+    /* Permitir scroll vertical */
+    html, body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        height: auto;
+    }
+
+    #app {
+        height: auto;
+        min-height: 100vh;
+    }
+
     #main-area {
         grid-template-columns: 1fr 1fr;
+        overflow: visible;
     }
+
+    /* Pozo ocupa todo el ancho arriba */
     #well-column {
         order: -1;
         grid-column: 1 / -1;
     }
-}
 
-@media (max-width: 700px) {
-    #main-area {
-        grid-template-columns: 1fr;
+    #well-panel {
+        max-width: 100%;
     }
+
+    #well-canvas {
+        max-height: 400px;
+    }
+
+    /* Barra superior: permitir wrap */
     #top-bar {
         flex-wrap: wrap;
+        justify-content: center;
     }
+
+    .panel-center {
+        max-width: none;
+        flex-basis: 100%;
+        order: -1;
+    }
+
+    /* Barra inferior: wrap */
     #bottom-bar {
         flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+
+/* ===================================================================
+   RESPONSIVE — MÓVIL (≤ 700px)
+   =================================================================== */
+@media (max-width: 700px) {
+
+    html, body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        height: auto;
+        font-size: 12px;
+    }
+
+    #app {
+        height: auto;
+        min-height: 100dvh;
+        grid-template-rows: auto auto auto;
+    }
+
+    /* ── BARRA SUPERIOR ── */
+    #top-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: var(--gap-sm);
+        gap: var(--gap-sm);
+    }
+
+    #vfd-panel {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .panel-center {
+        max-width: none;
+        flex-basis: 100%;
+        order: -1;
+    }
+
+    .lcd-large {
+        font-size: 20px;
+        padding: 8px 14px;
+    }
+
+    #choke-bpd-panel {
+        min-width: 0;
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .choke-group {
+        flex: 1;
+    }
+
+    #bpd-display {
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    /* ── ÁREA PRINCIPAL ── */
+    #main-area {
+        grid-template-columns: 1fr;
+        overflow: visible;
+        padding: var(--gap-sm);
+        gap: var(--gap-sm);
+    }
+
+    /* Orden de apilado: Pozo → Charts → Curva → Datos */
+    #well-column  { order: 1; }
+    #left-column  { order: 2; }
+    #right-column { order: 3; }
+
+    /* Pozo */
+    #well-panel {
+        max-width: 100%;
+    }
+
+    #well-canvas {
+        max-height: 320px;
+    }
+
+    /* Charts de historial */
+    #chart-panel {
+        min-height: 200px;
+    }
+
+    #chart-amp, #chart-prod, #chart-press {
+        min-height: 50px;
+    }
+
+    #chart-legend {
+        font-size: 9px;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    /* Parámetros del pozo */
+    #param-buttons {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .btn-param {
+        font-size: 9px;
+        padding: 4px 5px;
+        min-height: 28px;
+        flex: 1 1 auto;
+    }
+
+    /* Curva de bomba */
+    #curve-panel {
+        min-height: 200px;
+    }
+
+    #pump-curve-canvas {
+        min-height: 180px;
+    }
+
+    /* Panel de datos */
+    #data-panel {
+        font-size: 12px;
+    }
+
+    .data-row {
+        padding: 3px 6px;
+    }
+
+    .data-label {
+        font-size: 11px;
+    }
+
+    .data-value {
+        font-size: 13px;
+        min-width: 50px;
+    }
+
+    /* ── BARRA INFERIOR ── */
+    #bottom-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: var(--gap-sm);
+        gap: var(--gap-sm);
+    }
+
+    .slider-speed {
+        width: 80px;
+    }
+
+    .lcd-case {
+        font-size: 11px;
+        min-width: 90px;
+    }
+
+    #simulator-logo {
+        align-items: center;
+        flex-basis: 100%;
+        flex-direction: row;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .logo-name {
+        font-size: 15px;
+    }
+
+    .logo-subtitle {
+        font-size: 8px;
+    }
+
+    /* Tooltips: full width en muy chico */
+    #custom-tooltip {
+        max-width: 85vw;
+        font-size: 11px;
+    }
+
+    /* Botones más fáciles de tocar */
+    .btn-vfd {
+        padding: 6px 12px;
+        font-size: 12px;
+        min-width: 40px;
+    }
+
+    .btn-power {
+        width: 40px;
+        height: 40px;
+    }
+
+    .btn-nav {
+        padding: 6px 14px;
+        font-size: 16px;
+    }
+
+    .btn-action {
+        padding: 6px 16px;
+        font-size: 13px;
+    }
+
+    /* Sliders más gruesos para touch */
+    .slider {
+        height: 18px;
+    }
+
+    .slider::-webkit-slider-thumb {
+        width: 22px;
+        height: 28px;
+    }
+
+    .slider::-moz-range-thumb {
+        width: 22px;
+        height: 28px;
+    }
+}
+
+
+/* ===================================================================
+   RESPONSIVE — MÓVIL PEQUEÑO (≤ 480px)
+   =================================================================== */
+@media (max-width: 480px) {
+
+    html, body {
+        font-size: 11px;
+    }
+
+    .lcd-display {
+        font-size: 14px;
+        padding: 5px 8px;
+    }
+
+    .lcd-large {
+        font-size: 17px;
+        padding: 6px 10px;
+    }
+
+    .lcd-medium {
+        font-size: 15px;
+    }
+
+    #well-canvas {
+        max-height: 280px;
+    }
+
+    #chart-panel {
+        min-height: 170px;
+    }
+
+    #curve-panel {
+        min-height: 170px;
+    }
+
+    .btn-param {
+        font-size: 8px;
+        padding: 3px 4px;
+        min-height: 26px;
+    }
+
+    .data-label {
+        font-size: 10px;
+    }
+
+    .data-value {
+        font-size: 12px;
     }
 }
 
